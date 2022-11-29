@@ -8,9 +8,14 @@ import java.util.Collection;
 
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
+
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table(name = "_user")
 public class User {
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
@@ -21,7 +26,6 @@ public class User {
     private String password;
     @ManyToMany(fetch = FetchType.EAGER) // When fetching user, load roles at the same time
     private Collection<Role> roles = new ArrayList<>();
-
 
 
 }
