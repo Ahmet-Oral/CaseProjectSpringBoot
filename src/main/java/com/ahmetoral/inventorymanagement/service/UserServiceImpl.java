@@ -28,15 +28,30 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public User getUserByUsername(String username){
+        log.info("Fetching user with username: {} from database", username);
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new ApiRequestException("User with username:" + username + " does not exist"));
+        return user;
+    }
+
+    @Override
     public User saveUser(User user) {
         log.info("Saving new user with username: {} to the database", user.getUsername());
-        // todo user validation
+        // todo complete user validation
+        if (checkUsernameExists(user.getUsername())){
+            throw new ApiRequestException("User with username:" + user.getUsername() + " already exist");
+        }
         return userRepo.save(user);
     }
 
     @Override
     public Role saveRole(Role role) {
         log.info("Saving new role: {} to the database", role.getName());
+        // todo complete role validation
+        if (checkRoleExists(role.getName())){
+            throw new ApiRequestException("Role:" + role.getName() + " already exist");
+        }
         return roleRepo.save(role);
     }
 
@@ -57,12 +72,19 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public User getUserByUsername(String username){
-        log.info("Fetching user with username: {} from database", username);
-        User user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new ApiRequestException("User with username:" + username + " does not exist"));;
-        return user;
+    public Boolean checkUsernameExists(String username) {
+        log.info("Checking if user with username: {} exists in database", username);
+        return userRepo.findByUsername(username).isPresent();
     }
+
+    @Override
+    public Boolean checkRoleExists(String role) {
+        log.info("Checking if role: {} exists in database", role);
+        return roleRepo.findByName(role).isPresent();
+    }
+
+
+
 
 
 }

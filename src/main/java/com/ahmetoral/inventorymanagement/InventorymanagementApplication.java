@@ -15,11 +15,11 @@ public class InventorymanagementApplication {
 //	CommandLineRunner run (UserService userService) {
 //		return args-> {
 //			// will run after the application has initialized
-//			userService.saveRole(new Role(null, "ROLE_USER"));
-//			userService.saveRole(new Role(null, "ROLE_ADMIN"));
-//
 //			userService.saveUser(new User(null, "user 1", "ahmet", "1234", new ArrayList<>()));
 //			userService.saveUser(new User(null, "user 2", "mehmet", "1234", new ArrayList<>()));
+//
+//			userService.saveRole(new Role(null, "ROLE_USER"));
+//			userService.saveRole(new Role(null, "ROLE_ADMIN"));
 //
 //			userService.addRoleToUser("ahmet","ROLE_ADMIN");
 //			userService.addRoleToUser("ahmet","ROLE_USER");

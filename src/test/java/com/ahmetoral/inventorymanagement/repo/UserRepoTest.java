@@ -16,7 +16,6 @@ class UserRepoTest {
     @Autowired
     private UserRepo testRepoUser;
 
-
     @Test
     void shouldReturnUserByGivenUsername() {
         //given
