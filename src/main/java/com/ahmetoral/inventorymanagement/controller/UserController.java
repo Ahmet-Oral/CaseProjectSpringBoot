@@ -3,21 +3,31 @@ package com.ahmetoral.inventorymanagement.controller;
 import com.ahmetoral.inventorymanagement.model.Role;
 import com.ahmetoral.inventorymanagement.model.User;
 import com.ahmetoral.inventorymanagement.service.UserService;
+import com.ahmetoral.inventorymanagement.token.TokenComponent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 
 @RestController
+@Slf4j
 @RequiredArgsConstructor
-@RequestMapping("api/v1")
+@RequestMapping("/api/v1")
 public class UserController {
     private final UserService userService;
+    private final TokenComponent tokenComponent;
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getUsers() {
@@ -53,6 +63,13 @@ public class UserController {
         // response 200
         userService.addRoleToUser(form.getUsername(), form.getRoleName());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/token/refresh")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType(APPLICATION_JSON_VALUE);
+        new ObjectMapper().writeValue(response.getOutputStream(), tokenComponent.refreshAccessToken(request, response));
+
     }
 }
 

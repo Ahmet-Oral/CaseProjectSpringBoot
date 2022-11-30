@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -26,12 +27,13 @@ class UserServiceImplTest {
 
     @Mock private UserRepo userRepoMock;
     @Mock private RoleRepo roleRepoMock;
+    @Mock private PasswordEncoder passwordEncoder;
 
     private UserServiceImpl underTest;
 
     @BeforeEach // run before each test
     void setUp() {
-        underTest = new UserServiceImpl(userRepoMock, roleRepoMock);
+        underTest = new UserServiceImpl(userRepoMock, roleRepoMock, passwordEncoder);
     }
 
     @Test

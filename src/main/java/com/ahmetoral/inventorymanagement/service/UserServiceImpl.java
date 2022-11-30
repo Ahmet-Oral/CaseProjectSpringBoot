@@ -7,19 +7,41 @@ import com.ahmetoral.inventorymanagement.repo.RoleRepo;
 import com.ahmetoral.inventorymanagement.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor // leaving dependency injection to Lombok,
 @Transactional
 @Slf4j // logging
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final PasswordEncoder passwordEncoder;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("Loading UserDetails for username: {} from database", username);
+
+        User user = userRepo.findByUsername(username).orElseThrow(()
+                -> new UsernameNotFoundException("User with username: " + username + " not found in the database"));
+
+        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
+        // User(String username, String password, Collection<? extends GrantedAuthority > authorities)
+
+    }
 
     @Override
     public List<User> getUsers() {
@@ -42,6 +64,7 @@ public class UserServiceImpl implements UserService{
         if (checkUsernameExists(user.getUsername())){
             throw new ApiRequestException("User with username:" + user.getUsername() + " already exist");
         }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepo.save(user);
     }
 
@@ -82,8 +105,6 @@ public class UserServiceImpl implements UserService{
         log.info("Checking if role: {} exists in database", role);
         return roleRepo.findByName(role).isPresent();
     }
-
-
 
 
 

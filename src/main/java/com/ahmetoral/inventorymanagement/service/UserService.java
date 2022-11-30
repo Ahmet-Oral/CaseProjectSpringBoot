@@ -13,5 +13,5 @@ public interface UserService {
     Role saveRole(Role role);
     Boolean checkRoleExists(String role);
     void addRoleToUser(String username, String roleName);
-    // todo remove role from user ?
+
 }
