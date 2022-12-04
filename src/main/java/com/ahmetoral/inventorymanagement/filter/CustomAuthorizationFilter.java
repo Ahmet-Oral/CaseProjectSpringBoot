@@ -30,8 +30,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter { // will in
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // if user is trying to log in or refreshing the token, let the request go through
         log.info("getServletPath: " + request.getServletPath());
-        if (request.getServletPath().contains("/api/v1/login/") || request.getServletPath().equals("/token/refresh")) {
-            log.info("Trying to log in");
+        if (request.getServletPath().contains("/api/v1/login/") ||request.getServletPath().contains("/api/v1/register/") || request.getServletPath().equals("/token/refresh")) {
+            log.info("Allowed authorization");
             log.info("response: {}",response);
             filterChain.doFilter(request,response);
         }else {

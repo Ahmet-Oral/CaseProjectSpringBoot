@@ -17,7 +17,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Configuration
@@ -51,12 +50,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.cors();
 
         http.sessionManagement().sessionCreationPolicy(STATELESS);
-        http.authorizeRequests().antMatchers("/api/v1/login/**", "/token/refresh/**").permitAll();
+        http.authorizeRequests().antMatchers("/api/v1/login/**", "/token/refresh/**", "api/v1/register/**").permitAll();
 //        http.authorizeRequests().antMatchers(GET, "/api/v1/user/**").hasAuthority("ROLE_USER");
-        http.authorizeRequests().antMatchers(GET, "/api/v1/users/**").hasAuthority("ROLE_ADMIN");
+//        http.authorizeRequests().antMatchers(GET, "/api/v1/users/**").hasAuthority("ROLE_ADMIN");
 //        http.authorizeRequests().antMatchers(GET, "/api/v1/users/**").hasAuthority("ROLE_USER");
 //        http.authorizeRequests().antMatchers(POST, "/api/v1/users/save/**").hasAuthority("ROLE_ADMIN");
-        http.authorizeRequests().anyRequest().authenticated();
+//        http.authorizeRequests().anyRequest().authenticated();
 //        http.addFilter(customAuthenticationFilter);
         http.addFilterBefore(new CustomAuthorizationFilter(tokenComponent), UsernamePasswordAuthenticationFilter.class);
     }

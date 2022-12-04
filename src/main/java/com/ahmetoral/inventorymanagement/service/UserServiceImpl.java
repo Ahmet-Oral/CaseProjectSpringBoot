@@ -1,10 +1,8 @@
 package com.ahmetoral.inventorymanagement.service;
 
 import com.ahmetoral.inventorymanagement.exception.ApiRequestException;
-import com.ahmetoral.inventorymanagement.model.FailedLoginAttempt;
 import com.ahmetoral.inventorymanagement.model.Role;
 import com.ahmetoral.inventorymanagement.model.User;
-import com.ahmetoral.inventorymanagement.repo.FailedLoginAttemptRepo;
 import com.ahmetoral.inventorymanagement.repo.RoleRepo;
 import com.ahmetoral.inventorymanagement.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -15,22 +13,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor // leaving dependency injection to Lombok,
-@Transactional
+//@Transactional
 @Slf4j // logging
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
-    private final FailedLoginAttemptRepo failedLoginAttemptRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -69,14 +65,41 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    public User getUserById(UUID id) {
+        log.info("Fetching user with id: {} from database", id);
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new ApiRequestException("User with id:" + id + " does not exist"));
+
+        return user;
+    }
+
+    @Override
     public User saveUser(User user) {
         log.info("Saving new user with username: {} to the database", user.getUsername());
-        // todo complete user validation
-        if (checkUsernameExists(user.getUsername())){
-            throw new ApiRequestException("User with username:" + user.getUsername() + " already exist");
+        if (user.getUsername() == null || user.getPassword() == null) {
+            throw new ApiRequestException("Username or password can't be null");
+        }        if (checkUsernameExists(user.getUsername())){
+            throw new ApiRequestException("User with username: " + user.getUsername() + " already exist");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         return userRepo.save(user);
+    }
+
+    @Override
+    public void updateUser(User user) {
+        log.info("updating user with username: {} to the database", user.getUsername());
+        userRepo.save(user);
+
+    }
+
+    @Override
+    public void deleteUserByUsername(String username) {
+        log.info("deleting user with username: " + username);
+        if (username == null || !checkUsernameExists(username)) {
+            throw new ApiRequestException("Can't find user with username: " + username);
+        }
+        userRepo.delete(getUserByUsername(username));
     }
 
     @Override
@@ -93,17 +116,20 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public void addRoleToUser(String username, String roleName) {
         log.info("Adding role: {} to user with username: {} the database", roleName, username);
         User user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new ApiRequestException("User with username:" + username + " does not exist"));
+                .orElseThrow(() -> new ApiRequestException("User with username: " + username + " does not exist"));
         Role role = roleRepo.findByName(roleName)
                 .orElseThrow(() -> new ApiRequestException("Role:" + roleName + " does not exist"));
 
 //        if (!user.getRoles().contains(role)) {
 //            user.getRoles().add(role);
 //        }
-        user.getRoles().clear();// remove the old role
+        if (user.getRoles() != null) {
+            user.getRoles().clear();// remove the old role
+        }
         user.getRoles().add(role);
 
-        // will automatically save without needing to call userRepo because we are using transactional
+        userRepo.save(user);
+
     }
 
     @Override
@@ -118,36 +144,5 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return roleRepo.findByName(role).isPresent();
     }
 
-    @Override
-    public Integer increaseFailedLoginAttempt(String username) {
-        Optional<User> userOpt = userRepo.findByUsername(username);
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            log.info("Increasing number of failed attempt for user with username: {}", user.getUsername());
-            FailedLoginAttempt failedLoginAttempt = getFailedLoginAttemptByUser(user);
-            failedLoginAttempt.setNumberOfAttempts(failedLoginAttempt.getNumberOfAttempts() + 1);
-            failedLoginAttempt.setUser(user);
-            failedLoginAttemptRepo.save(failedLoginAttempt);
-            log.info("Number of failed attempts: {}", failedLoginAttempt.getNumberOfAttempts());
-            if (failedLoginAttempt.getNumberOfAttempts() > 4) {
-                lockUserAccount(user);
-            }
-            return failedLoginAttempt.getNumberOfAttempts();
-        }
-        return 0;
-
-    }
-
-    @Override
-    public FailedLoginAttempt getFailedLoginAttemptByUser(User user) {
-        Optional<FailedLoginAttempt> failedLoginAttempt = failedLoginAttemptRepo.findByUser(user);
-        return failedLoginAttempt.orElse(new FailedLoginAttempt());
-    }
-
-    @Override
-    public void lockUserAccount(User user) {
-        user.setLocked(true); // lock the account
-        userRepo.save(user);
-    }
 }

@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -35,7 +34,7 @@ class UserServiceImplTest {
 
     @BeforeEach // run before each test
     void setUp() {
-        underTest = new UserServiceImpl(userRepoMock, roleRepoMock, failedLoginAttemptRepo, passwordEncoder);
+        underTest = new UserServiceImpl(userRepoMock, roleRepoMock,  passwordEncoder);
     }
 
     @Test
@@ -48,7 +47,9 @@ class UserServiceImplTest {
     @Test
     void canSaveUser() {
         // given
-        User userToSave = new User(null,"username","password", new ArrayList<>());
+        User userToSave = new User();
+        userToSave.setUsername("username");
+        userToSave.setPassword("password");
         // when
         underTest.saveUser(userToSave);
         // then
@@ -74,10 +75,12 @@ class UserServiceImplTest {
     @Test
     void canAddRoleToUser() {
         // given
-        User user = User.builder().id(123L).password("password")
-                .roles(new ArrayList<>()).username("username").build();
+        User user = new User();
+        user.setUsername("username");
+        user.setPassword("password");
         when(userRepoMock.findByUsername("username")).thenReturn(Optional.of(user));
-        Role role = Role.builder().id(123L).name("Role Name").build();
+        Role role = new Role();
+        role.setName("Role Name");
         when(roleRepoMock.findByName("Role Name")).thenReturn(Optional.of(role));
         // when
         underTest.addRoleToUser("username", "Role Name");
@@ -87,8 +90,9 @@ class UserServiceImplTest {
     }
     @Test
     void checkUsernameExists() {
-        User user = User.builder().id(123L).password("password")
-                .roles(new ArrayList<>()).username("username").build();
+        User user = new User();
+        user.setUsername("username");
+        user.setPassword("password");
         when(userRepoMock.findByUsername("username")).thenReturn(Optional.of(user));
         assertTrue(underTest.checkUsernameExists("username"));
         verify(userRepoMock).findByUsername("username");
@@ -100,7 +104,8 @@ class UserServiceImplTest {
     }
     @Test
     void checkRoleExists() {
-        Role role = Role.builder().id(123L).name("role").build();
+        Role role = new Role();
+        role.setName("role");
         when(roleRepoMock.findByName("role")).thenReturn( Optional.of(role));
         assertTrue(underTest.checkRoleExists("role"));
         verify(roleRepoMock).findByName("role");
