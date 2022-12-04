@@ -42,6 +42,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         log.info("user: {}", user);
 
+        if (user.getLocked()) {
+            log.error("Account with username: " + username + " is locked");
+            return null;
+        }
+
         Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
         user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
@@ -95,6 +100,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 //        if (!user.getRoles().contains(role)) {
 //            user.getRoles().add(role);
 //        }
+        user.getRoles().clear();// remove the old role
         user.getRoles().add(role);
 
         // will automatically save without needing to call userRepo because we are using transactional
@@ -113,26 +119,35 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public void newFailedLoginAttempt(String username) {
+    public Integer increaseFailedLoginAttempt(String username) {
         Optional<User> userOpt = userRepo.findByUsername(username);
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             log.info("Increasing number of failed attempt for user with username: {}", user.getUsername());
-            FailedLoginAttempt failedLoginAttempt = getNumberOfFailedAttemptByUser(user);
+            FailedLoginAttempt failedLoginAttempt = getFailedLoginAttemptByUser(user);
             failedLoginAttempt.setNumberOfAttempts(failedLoginAttempt.getNumberOfAttempts() + 1);
             failedLoginAttempt.setUser(user);
             failedLoginAttemptRepo.save(failedLoginAttempt);
             log.info("Number of failed attempts: {}", failedLoginAttempt.getNumberOfAttempts());
-
-
+            if (failedLoginAttempt.getNumberOfAttempts() > 4) {
+                lockUserAccount(user);
+            }
+            return failedLoginAttempt.getNumberOfAttempts();
         }
+        return 0;
 
     }
 
     @Override
-    public FailedLoginAttempt getNumberOfFailedAttemptByUser(User user) {
+    public FailedLoginAttempt getFailedLoginAttemptByUser(User user) {
         Optional<FailedLoginAttempt> failedLoginAttempt = failedLoginAttemptRepo.findByUser(user);
         return failedLoginAttempt.orElse(new FailedLoginAttempt());
+    }
+
+    @Override
+    public void lockUserAccount(User user) {
+        user.setLocked(true); // lock the account
+        userRepo.save(user);
     }
 }

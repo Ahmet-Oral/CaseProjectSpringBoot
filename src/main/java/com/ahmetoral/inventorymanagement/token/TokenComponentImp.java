@@ -81,6 +81,11 @@ public class TokenComponentImp implements TokenComponent {
         tokens.put("access_token", accessToken);
         tokens.put("refresh_token", refreshToken);
         tokens.put("username", username);
+        if (grantedAuthorityStreamSupplier.get().findFirst().isPresent()){ // if user has role
+            tokens.put("role", String.valueOf(grantedAuthorityStreamSupplier.get().findFirst().get()));
+        } else { // if user has no role
+            tokens.put("role", "");
+        }
         return tokens;
     }
 

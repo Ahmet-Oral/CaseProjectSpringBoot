@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,23 +41,26 @@ public class UserController {
     @PostMapping("/login/{username}/{password}")
     ResponseEntity<Map<String,String>> login(@PathVariable("username") String username, @PathVariable("password") String password, HttpServletRequest request) {
         log.info("---Username is: {}", username); log.info("--Password is: {}", password);
-
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        log.info("---authenticationToken is: {}", authenticationToken);
         try {
-            Authentication authentication = authenticationManager.authenticate(authenticationToken);
-            return ResponseEntity.ok().body(tokenComponent.generateAndGetTokenMap(request, authentication));
-        } catch (Exception e) {
+            Authentication authentication = authenticationManager.authenticate(authenticationToken); // will throw exception if authentication fails
+            Map<String,String> map = tokenComponent.generateAndGetTokenMap(request, authentication);
+            return ResponseEntity.ok().body(map);
+        } catch (Exception e) { // if authentication fails,
             log.info("---Authentication failed");
-            userService.newFailedLoginAttempt(username);
-            Authentication authentication = authenticationManager.authenticate(authenticationToken);
-            return ResponseEntity.ok().body(tokenComponent.generateAndGetTokenMap(request, authentication));
+            if (userService.checkUsernameExists(username)) {
+                //increase number of failed login attempts
+                if (userService.increaseFailedLoginAttempt(username) < 4){ // if username or password is incorrect
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+                }
+                return ResponseEntity.status(HttpStatus.LOCKED).body(null); // if account is locked
+            }else { // user not found
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+//            throw new ApiRequestException("Authentication failed for username: " + username);
+
         }
-
-
-
     }
-
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getUsers() {

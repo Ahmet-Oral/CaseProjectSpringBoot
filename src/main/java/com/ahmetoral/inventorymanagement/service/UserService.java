@@ -13,9 +13,9 @@ public interface UserService {
     Boolean checkUsernameExists(String username);
     Role saveRole(Role role);
     Boolean checkRoleExists(String role);
-
-    void newFailedLoginAttempt(String username);
-    FailedLoginAttempt getNumberOfFailedAttemptByUser(User user);
+    Integer increaseFailedLoginAttempt(String username);
+    FailedLoginAttempt getFailedLoginAttemptByUser(User user);
     void addRoleToUser(String username, String roleName);
+    void lockUserAccount(User user);
 
 }
