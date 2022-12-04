@@ -22,14 +22,13 @@ public class InventorymanagementApplication {
 		return new BCryptPasswordEncoder();
 	}
 
-
 //	 breaks tests
 	@Bean
 	CommandLineRunner run (UserService userService) {
 		return args-> {
 			// will run after the application has initialized
-			userService.saveUser(new com.ahmetoral.inventorymanagement.model.User(null, "user 1", "ahmet", "1234", new ArrayList<>()));
-			userService.saveUser(new com.ahmetoral.inventorymanagement.model.User(null, "user 2", "mehmet", "1234", new ArrayList<>()));
+			userService.saveUser(new com.ahmetoral.inventorymanagement.model.User(null, "ahmet", "1234", new ArrayList<>()));
+			userService.saveUser(new com.ahmetoral.inventorymanagement.model.User(null, "mehmet", "1234", new ArrayList<>()));
 
 			userService.saveRole(new com.ahmetoral.inventorymanagement.model.Role(null, "ROLE_USER"));
 			userService.saveRole(new com.ahmetoral.inventorymanagement.model.Role(null, "ROLE_ADMIN"));

@@ -19,7 +19,7 @@ class UserRepoTest {
     @Test
     void shouldReturnUserByGivenUsername() {
         //given
-        User user = new User(null,"name","username","password", new ArrayList<>());
+        User user = new User(null,"username","password", new ArrayList<>());
         testRepoUser.save(user);
         //when
         Boolean exists = testRepoUser.findByUsername("username").isPresent();

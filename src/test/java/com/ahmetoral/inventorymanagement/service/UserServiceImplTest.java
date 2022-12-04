@@ -2,6 +2,7 @@ package com.ahmetoral.inventorymanagement.service;
 
 import com.ahmetoral.inventorymanagement.model.Role;
 import com.ahmetoral.inventorymanagement.model.User;
+import com.ahmetoral.inventorymanagement.repo.FailedLoginAttemptRepo;
 import com.ahmetoral.inventorymanagement.repo.RoleRepo;
 import com.ahmetoral.inventorymanagement.repo.UserRepo;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,12 +29,13 @@ class UserServiceImplTest {
     @Mock private UserRepo userRepoMock;
     @Mock private RoleRepo roleRepoMock;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private FailedLoginAttemptRepo failedLoginAttemptRepo;
 
     private UserServiceImpl underTest;
 
     @BeforeEach // run before each test
     void setUp() {
-        underTest = new UserServiceImpl(userRepoMock, roleRepoMock, passwordEncoder);
+        underTest = new UserServiceImpl(userRepoMock, roleRepoMock, failedLoginAttemptRepo, passwordEncoder);
     }
 
     @Test
@@ -46,7 +48,7 @@ class UserServiceImplTest {
     @Test
     void canSaveUser() {
         // given
-        User userToSave = new User(null,"name","username","password", new ArrayList<>());
+        User userToSave = new User(null,"username","password", new ArrayList<>());
         // when
         underTest.saveUser(userToSave);
         // then
@@ -72,7 +74,7 @@ class UserServiceImplTest {
     @Test
     void canAddRoleToUser() {
         // given
-        User user = User.builder().id(123L).name("name").password("password")
+        User user = User.builder().id(123L).password("password")
                 .roles(new ArrayList<>()).username("username").build();
         when(userRepoMock.findByUsername("username")).thenReturn(Optional.of(user));
         Role role = Role.builder().id(123L).name("Role Name").build();
@@ -85,7 +87,7 @@ class UserServiceImplTest {
     }
     @Test
     void checkUsernameExists() {
-        User user = User.builder().id(123L).name("name").password("password")
+        User user = User.builder().id(123L).password("password")
                 .roles(new ArrayList<>()).username("username").build();
         when(userRepoMock.findByUsername("username")).thenReturn(Optional.of(user));
         assertTrue(underTest.checkUsernameExists("username"));

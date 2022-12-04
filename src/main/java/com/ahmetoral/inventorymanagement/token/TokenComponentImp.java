@@ -80,6 +80,7 @@ public class TokenComponentImp implements TokenComponent {
         Map<String, String> tokens = new HashMap<>();
         tokens.put("access_token", accessToken);
         tokens.put("refresh_token", refreshToken);
+        tokens.put("username", username);
         return tokens;
     }
 

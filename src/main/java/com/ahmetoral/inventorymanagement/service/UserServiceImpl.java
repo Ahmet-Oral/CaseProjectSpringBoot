@@ -1,8 +1,10 @@
 package com.ahmetoral.inventorymanagement.service;
 
 import com.ahmetoral.inventorymanagement.exception.ApiRequestException;
+import com.ahmetoral.inventorymanagement.model.FailedLoginAttempt;
 import com.ahmetoral.inventorymanagement.model.Role;
 import com.ahmetoral.inventorymanagement.model.User;
+import com.ahmetoral.inventorymanagement.repo.FailedLoginAttemptRepo;
 import com.ahmetoral.inventorymanagement.repo.RoleRepo;
 import com.ahmetoral.inventorymanagement.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor // leaving dependency injection to Lombok,
@@ -27,6 +30,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final FailedLoginAttemptRepo failedLoginAttemptRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -35,6 +39,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         User user = userRepo.findByUsername(username).orElseThrow(()
                 -> new UsernameNotFoundException("User with username: " + username + " not found in the database"));
+
+        log.info("user: {}", user);
 
         Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
         user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
@@ -106,6 +112,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return roleRepo.findByName(role).isPresent();
     }
 
+    @Override
+    public void newFailedLoginAttempt(String username) {
+        Optional<User> userOpt = userRepo.findByUsername(username);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            log.info("Increasing number of failed attempt for user with username: {}", user.getUsername());
+            FailedLoginAttempt failedLoginAttempt = getNumberOfFailedAttemptByUser(user);
+            failedLoginAttempt.setNumberOfAttempts(failedLoginAttempt.getNumberOfAttempts() + 1);
+            failedLoginAttempt.setUser(user);
+            failedLoginAttemptRepo.save(failedLoginAttempt);
+            log.info("Number of failed attempts: {}", failedLoginAttempt.getNumberOfAttempts());
 
 
+        }
+
+    }
+
+    @Override
+    public FailedLoginAttempt getNumberOfFailedAttemptByUser(User user) {
+        Optional<FailedLoginAttempt> failedLoginAttempt = failedLoginAttemptRepo.findByUser(user);
+        return failedLoginAttempt.orElse(new FailedLoginAttempt());
+    }
 }

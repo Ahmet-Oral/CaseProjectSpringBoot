@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -17,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -25,15 +29,41 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class UserController {
     private final UserService userService;
     private final TokenComponent tokenComponent;
+    private final AuthenticationManager authenticationManager;
+
+
+
+    @PostMapping("/login/{username}/{password}")
+    ResponseEntity<Map<String,String>> login(@PathVariable("username") String username, @PathVariable("password") String password, HttpServletRequest request) {
+        log.info("---Username is: {}", username); log.info("--Password is: {}", password);
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        log.info("---authenticationToken is: {}", authenticationToken);
+        try {
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            return ResponseEntity.ok().body(tokenComponent.generateAndGetTokenMap(request, authentication));
+        } catch (Exception e) {
+            log.info("---Authentication failed");
+            userService.newFailedLoginAttempt(username);
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            return ResponseEntity.ok().body(tokenComponent.generateAndGetTokenMap(request, authentication));
+        }
+
+
+
+    }
+
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getUsers() {
         // response 200
         return ResponseEntity.ok().body(userService.getUsers());
     }
+
 
     @GetMapping("/user/{username}")
     public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
@@ -69,8 +99,10 @@ public class UserController {
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType(APPLICATION_JSON_VALUE);
         new ObjectMapper().writeValue(response.getOutputStream(), tokenComponent.refreshAccessToken(request, response));
-
     }
+
+
+
 }
 
 

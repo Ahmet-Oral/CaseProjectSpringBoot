@@ -29,15 +29,20 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter { // will in
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // if user is trying to log in or refreshing the token, let the request go through
-        if (request.getServletPath().equals("/api/v1/login") || request.getServletPath().equals("/token/refresh")) {
+        log.info("getServletPath: " + request.getServletPath());
+        if (request.getServletPath().contains("/api/v1/login/") || request.getServletPath().equals("/token/refresh")) {
+            log.info("Trying to log in");
+            log.info("response: {}",response);
             filterChain.doFilter(request,response);
-        }
-        else {
+        }else {
             String authorizationHeader = request.getHeader(AUTHORIZATION);
+            log.info("request: " + request);
+            log.info("authorizationHeader: " + authorizationHeader);
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) { // request that carries the token will have "Bearer " prefix
                 try {
                     String token = authorizationHeader.substring("Bearer ".length()); // remove bearer from string to get token
                     UsernamePasswordAuthenticationToken authenticationToken = tokenComponent.getUsernamePasswordAuthenticationToken(token);
+                    log.info("authenticationToken: " + authenticationToken);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     filterChain.doFilter(request, response);
                 } catch (Exception exception) {
