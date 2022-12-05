@@ -80,7 +80,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         userRepo.save(user);
         log.info("role ke: {}", userRequest.getRole());
-        if (userRequest.getRole().equals("")) {
+        if (userRequest.getRole()== null || userRequest.getRole().equals("")) {
             setUserRole(userRequest.getUsername(), "ROLE_USER");
         } else {
             setUserRole(userRequest.getUsername(), userRequest.getRole());
@@ -143,7 +143,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public Boolean checkRoleExists(String role) {
+    public Boolean  checkRoleExists(String role) {
         log.info("Checking if role: {} exists in database", role);
         return roleRepo.findByName(role).isPresent();
     }

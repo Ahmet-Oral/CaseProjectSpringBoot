@@ -11,7 +11,7 @@
 	<groupId>com.ahmetoral</groupId>
 	<artifactId>caseproject</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>caseproject</name>
+	<name>case-project</name>
 	<description>Case Project</description>
 	<properties>
 		<java.version>11</java.version>
@@ -93,6 +93,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>spring-boot-case-docker</finalName>
 	</build>
 
 </project>
