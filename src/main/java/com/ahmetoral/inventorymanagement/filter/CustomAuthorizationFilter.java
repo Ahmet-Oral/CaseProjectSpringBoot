@@ -58,7 +58,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter { // will in
 
             } else {
                 log.error("Unauthorized access");
-                filterChain.doFilter(request, response);
+                filterChain.    doFilter(request, response);
             }
         }
     }

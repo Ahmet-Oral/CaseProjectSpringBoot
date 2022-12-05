@@ -5,6 +5,7 @@ import com.ahmetoral.inventorymanagement.model.User;
 import com.ahmetoral.inventorymanagement.repo.FailedLoginAttemptRepo;
 import com.ahmetoral.inventorymanagement.repo.RoleRepo;
 import com.ahmetoral.inventorymanagement.repo.UserRepo;
+import com.ahmetoral.inventorymanagement.requests.UserRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +48,7 @@ class UserServiceImplTest {
     @Test
     void canSaveUser() {
         // given
-        User userToSave = new User();
+        UserRequest userToSave = new UserRequest();
         userToSave.setUsername("username");
         userToSave.setPassword("password");
         // when
@@ -83,7 +84,7 @@ class UserServiceImplTest {
         role.setName("Role Name");
         when(roleRepoMock.findByName("Role Name")).thenReturn(Optional.of(role));
         // when
-        underTest.addRoleToUser("username", "Role Name");
+        underTest.setUserRole("username", "Role Name");
         // then
         verify(userRepoMock).findByUsername( "username");
         verify(roleRepoMock).findByName("Role Name");

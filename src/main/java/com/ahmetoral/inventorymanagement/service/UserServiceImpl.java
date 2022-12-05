@@ -5,6 +5,7 @@ import com.ahmetoral.inventorymanagement.model.Role;
 import com.ahmetoral.inventorymanagement.model.User;
 import com.ahmetoral.inventorymanagement.repo.RoleRepo;
 import com.ahmetoral.inventorymanagement.repo.UserRepo;
+import com.ahmetoral.inventorymanagement.requests.UserRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -32,7 +33,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("Loading UserDetails for username: {} from database", username);
-
         User user = userRepo.findByUsername(username).orElseThrow(()
                 -> new UsernameNotFoundException("User with username: " + username + " not found in the database"));
 
@@ -74,38 +74,48 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public User saveUser(User user) {
-        log.info("Saving new user with username: {} to the database", user.getUsername());
-        if (user.getUsername() == null || user.getPassword() == null) {
+    public void saveUser(UserRequest userRequest) {
+        log.info("Saving new user with username: {} to the database", userRequest.getUsername());
+        if (userRequest.getUsername() == null || userRequest.getPassword() == null) {
             throw new ApiRequestException("Username or password can't be null");
-        }        if (checkUsernameExists(user.getUsername())){
-            throw new ApiRequestException("User with username: " + user.getUsername() + " already exist");
+        }        if (checkUsernameExists(userRequest.getUsername())){
+            throw new ApiRequestException("User with username: " + userRequest.getUsername() + " already exist");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        return userRepo.save(user);
+        User user = new User();
+        user.setUsername(userRequest.getUsername());
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        userRepo.save(user);
+        log.info("role ke: {}", userRequest.getRole());
+        if (userRequest.getRole().equals("")){
+            setUserRole(userRequest.getUsername(),"ROLE_USER");
+        } else {
+            setUserRole(userRequest.getUsername(),userRequest.getRole());
+        }
     }
 
     @Override
-    public void updateUser(User user) {
-        log.info("updating user with username: {} to the database", user.getUsername());
+    public void updateUser(UserRequest userRequest) {
+        log.info("updating user with id: {} to the database", userRequest.getId());
+        User user = getUserById(UUID.fromString(userRequest.getId()));
+        setUserRole(user.getUsername(), userRequest.getRole());
+        user.setUsername(userRequest.getUsername());
+        user.setLocked((userRequest.getLocked()));
         userRepo.save(user);
 
     }
 
     @Override
-    public void deleteUserByUsername(String username) {
-        log.info("deleting user with username: " + username);
-        if (username == null || !checkUsernameExists(username)) {
-            throw new ApiRequestException("Can't find user with username: " + username);
-        }
-        userRepo.delete(getUserByUsername(username));
+    public void deleteUserById(UUID id) {
+        log.info("deleting user with id: " + id);
+        userRepo.deleteById(id);
     }
 
     @Override
     public Role saveRole(Role role) {
         log.info("Saving new role: {} to the database", role.getName());
-        // todo complete role validation
+        if (role.getName().equals("")) {
+            throw new ApiRequestException("Role cannot be empty");
+        }
         if (checkRoleExists(role.getName())){
             throw new ApiRequestException("Role:" + role.getName() + " already exist");
         }
@@ -113,16 +123,19 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public void addRoleToUser(String username, String roleName) {
+    public void setUserRole(String username, String roleName) {
         log.info("Adding role: {} to user with username: {} the database", roleName, username);
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new ApiRequestException("User with username: " + username + " does not exist"));
-        Role role = roleRepo.findByName(roleName)
-                .orElseThrow(() -> new ApiRequestException("Role:" + roleName + " does not exist"));
+        // Throw exception if role does not exist
+//        Role role = roleRepo.findByName(roleName)
+//                .orElseThrow(() -> new ApiRequestException("Role:" + roleName + " does not exist"));
 
-//        if (!user.getRoles().contains(role)) {
-//            user.getRoles().add(role);
-//        }
+        // Create new role if role does not exist
+        if (!checkRoleExists(roleName)) {
+            saveRole(new Role(UUID.randomUUID(), roleName));
+        }
+        Role role = roleRepo.findByName(roleName).get();
         if (user.getRoles() != null) {
             user.getRoles().clear();// remove the old role
         }

@@ -18,9 +18,14 @@ public class Weather {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
+    @Column(nullable = false)
     private Integer temperature;
+    @Column(nullable = false)
     private String country;
+    @Column(nullable = false)
     private String city;
-    private Date date_;
-    private String condition_;
+    @Column(nullable = false, name = "date_")
+    private Date date;
+    @Column(nullable = false, name = "condition_")
+    private String condition;
 }
