@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ahmetoral</groupId>
-	<artifactId>inventorymanagement</artifactId>
+	<artifactId>caseproject</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>inventorymanagement</name>
-	<description>Inventory Management System</description>
+	<name>caseproject</name>
+	<description>Case Project</description>
 	<properties>
 		<java.version>11</java.version>
 	</properties>
