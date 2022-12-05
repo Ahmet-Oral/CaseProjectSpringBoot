@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,26 +26,21 @@ import static java.util.Arrays.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
-// todo optimize
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class TokenComponentImp implements TokenComponent {
 
     private final UserService userService;
 
-    public TokenComponentImp(UserService userService) {
-        this.userService = userService;
-    }
-
     @Override
     public String getAlgorithmSecret() {
-        // todo - secret string is only exposed in development, secure it using something like utility class before switching to production
         return "superSecret";
     }
 
     @Override
     public String generateAccessToken(String username, String requestUrl, Supplier<Stream<GrantedAuthority>> grantedAuthorityStreamSupplier) {
-        return  JWT.create()
+        return JWT.create()
                 .withSubject(username)
                 .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 10000)) // 10 minutes
                 .withIssuer(requestUrl)
@@ -61,18 +57,19 @@ public class TokenComponentImp implements TokenComponent {
                 .withIssuer(requestUrl)
                 .withClaim("roles", grantedAuthorityStreamSupplier.get()
                         .map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
-                .sign(generateAlgorithm());        }
+                .sign(generateAlgorithm());
+    }
 
     @Override
     public Map<String, String> generateAndGetTokenMap(HttpServletRequest request, Authentication authentication) {
         // org.springframework.security.core.userdetails
         User user = (User) authentication.getPrincipal();
-        log.info("User with username: {} authenticated",user.getUsername());
+        log.info("User with username: {} authenticated", user.getUsername());
 
         String username = user.getUsername();
         String requestUrl = request.getRequestURL().toString();
-        Supplier<Stream<GrantedAuthority>> grantedAuthorityStreamSupplier
-                = () -> user.getAuthorities().stream();
+
+        Supplier<Stream<GrantedAuthority>> grantedAuthorityStreamSupplier = () -> user.getAuthorities().stream();
 
         String accessToken = generateAccessToken(username, requestUrl, grantedAuthorityStreamSupplier);
         String refreshToken = generateRefreshToken(username, requestUrl, grantedAuthorityStreamSupplier);
@@ -81,7 +78,8 @@ public class TokenComponentImp implements TokenComponent {
         tokens.put("access_token", accessToken);
         tokens.put("refresh_token", refreshToken);
         tokens.put("username", username);
-        if (grantedAuthorityStreamSupplier.get().findFirst().isPresent()){ // if user has role
+
+        if (grantedAuthorityStreamSupplier.get().findFirst().isPresent()) { // if user has role
             tokens.put("role", String.valueOf(grantedAuthorityStreamSupplier.get().findFirst().get()));
         } else { // if user has no role
             tokens.put("role", "");
@@ -89,9 +87,8 @@ public class TokenComponentImp implements TokenComponent {
         return tokens;
     }
 
-
     @Override
-    public Map<String, String>  refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+    public Map<String, String> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String authorizationHeader = request.getHeader(AUTHORIZATION);
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) { // request that carries the token will have "Bearer " prefix
             try {
@@ -133,8 +130,6 @@ public class TokenComponentImp implements TokenComponent {
         return Algorithm.HMAC256(getAlgorithmSecret().getBytes());
     }
 
-
-
     @Override
     public UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(String token) {
         JWTVerifier verifier = JWT.require(generateAlgorithm()).build();
@@ -145,6 +140,6 @@ public class TokenComponentImp implements TokenComponent {
         stream(roles).forEach(role -> { // convert String roles to SimpleGrantedAuthority
             authorities.add(new SimpleGrantedAuthority(role));
         });
-        return new UsernamePasswordAuthenticationToken(username,null, authorities);
+        return new UsernamePasswordAuthenticationToken(username, null, authorities);
     }
 }

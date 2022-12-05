@@ -9,7 +9,5 @@ public interface WeatherService {
 
     Page<Weather> getDataWithPagination(Pageable pageable);
     Page<Weather> getDataWithFilterAndPagination(String filterBy,String filter, Pageable pageable);
-
-
     void createNewWeather(Weather weather);
 }

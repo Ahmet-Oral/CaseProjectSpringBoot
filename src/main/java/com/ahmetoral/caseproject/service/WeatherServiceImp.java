@@ -15,11 +15,9 @@ import java.util.Date;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WeatherServiceImp implements WeatherService{
+public class WeatherServiceImp implements WeatherService {
 
     private final WeatherRepo weatherRepo;
-
-
 
     @Override
     public Page<Weather> getDataWithPagination(Pageable pageable) {
@@ -29,10 +27,9 @@ public class WeatherServiceImp implements WeatherService{
 
     @SneakyThrows
     @Override
-    public Page<Weather> getDataWithFilterAndPagination(String filterBy,String filter, Pageable pageable) {
-        log.info("Paging and filtering data --filterBy:" + filterBy + "  --filter: "+filter+"  --pageable: " + pageable);
-
-        switch (filterBy){
+    public Page<Weather> getDataWithFilterAndPagination(String filterBy, String filter, Pageable pageable) {
+        log.info("Paging and filtering data --filterBy:" + filterBy + "  --filter: " + filter + "  --pageable: " + pageable);
+        switch (filterBy) {
             case "temperature":
                 log.info("Paging and filtering data --temperature: " + filter);
                 log.info("Paging and filtering data --temperatureInt: " + Integer.valueOf(filter));
@@ -42,15 +39,10 @@ public class WeatherServiceImp implements WeatherService{
             case "city":
                 return weatherRepo.findAllByCityContaining(filter, pageable);
             case "date":
-                if (filter.length() == 4){ // only filter by year
-                    // todo cleanup the code
-                    String sDate1="01/01/"+filter;
-                    String sDate2="01/01/"+(Integer.parseInt(filter)+1);
-                    log.info("Paging and filtering data --sDate2: " + sDate2);
-
-                    Date date1=new SimpleDateFormat("dd/MM/yyyy").parse(sDate1);
-                    Date date2=new SimpleDateFormat("dd/MM/yyyy").parse(sDate1);
-                    return weatherRepo.findAllByDateBetween(new java.sql.Date(date1.getTime()),new java.sql.Date(date2.getTime()), pageable);
+                if (filter.length() == 4) { // only filter by year
+                    Date dateStart = new SimpleDateFormat("dd/MM/yyyy").parse("01/01/" + filter);
+                    Date dateEnd = new SimpleDateFormat("dd/MM/yyyy").parse("01/01/" + (Integer.parseInt(filter) + 1));
+                    return weatherRepo.findAllByDateBetween(dateStart, dateEnd, pageable);
                 }
                 break;
             case "condition":
@@ -62,7 +54,11 @@ public class WeatherServiceImp implements WeatherService{
 
     @Override
     public void createNewWeather(Weather weather) {
-        log.info("Creating new weather data: " + weather);
+        log.info("is equals {}", weather.getCondition().equals(""));
+        if (weather.getCondition().equals("") || weather.getCity().equals("") || weather.getCountry().equals("")) {
+            log.info("Invalid weather data {}", weather);
+            throw new IllegalArgumentException("Invalid weather data");
+        }
         weatherRepo.save(weather);
     }
 }

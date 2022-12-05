@@ -9,7 +9,6 @@ import java.util.Map;
 
 public interface AuthenticationService {
 
-
     ResponseEntity<Map<String,String>> authenticateUser(String username, String password, HttpServletRequest request);
     Integer increaseFailedLoginAttempt(String username);
     void resetFailedLoginAttempt(String username);

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor // leaving dependency injection to Lombok,
+@RequiredArgsConstructor
 @Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
@@ -35,21 +35,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         try {
             Authentication authentication = authenticationManager.authenticate(authenticationToken); // will throw exception if authentication fails
-            Map<String,String> map = tokenComponent.generateAndGetTokenMap(request, authentication);
+            Map<String, String> map = tokenComponent.generateAndGetTokenMap(request, authentication);
             resetFailedLoginAttempt(username); // reset failed login attempt on successfulAuthentication
             return ResponseEntity.ok().body(map);
         } catch (Exception e) { // if authentication fails,
             log.info("---Authentication failed");
             if (userService.checkUsernameExists(username)) {
                 //increase number of failed login attempts
-                if (increaseFailedLoginAttempt(username) < 4){ // if password is incorrect
+                if (increaseFailedLoginAttempt(username) < 4) { // if password is incorrect
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
                 }
                 return ResponseEntity.status(HttpStatus.LOCKED).body(null); // if account is locked
-            }else { // user not found
+            } else { // user not found
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
-//            throw new ApiRequestException("Authentication failed for username: " + username);
         }
     }
 
@@ -86,7 +85,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void resetFailedLoginAttempt(String username) {
         Optional<User> userOpt = userRepo.findByUsername(username);
-
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             log.info("Resetting number of failed attempt for user with username: {}", user.getUsername());
@@ -102,7 +100,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setLocked(true); // lock the account
         userRepo.save(user);
     }
-
 
 
 }

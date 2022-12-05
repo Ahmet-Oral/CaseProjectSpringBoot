@@ -1,6 +1,5 @@
 package com.ahmetoral.caseproject.filter;
 
-import com.ahmetoral.caseproject.service.UserService;
 import com.ahmetoral.caseproject.token.TokenComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -26,9 +26,9 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
     private final AuthenticationManager authenticationManager;
     private final TokenComponent tokenComponent;
-    private final UserService userService;
+//    private final UserService userService;
 
-
+// TODO *****This class is replaced by AuthorizationService - We can choose which one to use, both are functional*****
 
 
     @Override // whenever the user tries to log in
@@ -51,13 +51,12 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         new ObjectMapper().writeValue(response.getOutputStream(), tokens);
     }
 
-    // todo - can implement anti brute force protection by keeping track of the amounts of unsuccessfulAuthentication
-//    @Override
-//    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-//        log.error("Unsuccessful authentication");
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        log.error("Unsuccessful authentication");
 //        String username = request.getParameter("username");
 //        userService.newFailedLoginAttempt(username);
-//
-//
-//    }
+
+
+    }
 }

@@ -3,17 +3,18 @@ package com.ahmetoral.caseproject.controller;
 import com.ahmetoral.caseproject.dto.UserDto;
 import com.ahmetoral.caseproject.model.Role;
 import com.ahmetoral.caseproject.model.User;
+import com.ahmetoral.caseproject.requests.RoleToUserRequest;
 import com.ahmetoral.caseproject.requests.UserRequest;
 import com.ahmetoral.caseproject.service.AuthenticationService;
 import com.ahmetoral.caseproject.service.UserService;
 import com.ahmetoral.caseproject.token.TokenComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -36,15 +37,14 @@ public class UserController {
     private final AuthenticationService authenticationService;
 
 
-
     @PostMapping("/login")
-    ResponseEntity<Map<String,String>> login(@RequestBody UserRequest userRequest, HttpServletRequest request) {
+    ResponseEntity<Map<String, String>> login(@RequestBody UserRequest userRequest, HttpServletRequest request) {
         return authenticationService.authenticateUser(userRequest.getUsername(), userRequest.getPassword(), request);
     }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody UserRequest userRequest) {
-        log.info("Registering user: {}" , userRequest);
+        log.info("Registering user: {}", userRequest);
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/v1/register").toUriString());
         // it should be null by default and will be automatically set to ROLE_USER but force it to for security
@@ -54,29 +54,34 @@ public class UserController {
         return ResponseEntity.created(uri).body("user successfully created");
     }
 
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> getUsers() {
-        // response 200
-        return ResponseEntity.ok().body(userService.getUsers());
+    @GetMapping("/token/refresh")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType(APPLICATION_JSON_VALUE);
+        new ObjectMapper().writeValue(response.getOutputStream(), tokenComponent.refreshAccessToken(request, response));
     }
 
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getUsers() {
+        return ResponseEntity.ok().body(userService.getUsers());
+    }
 
     @GetMapping("/user/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable String id) {
         log.info("getting user with id: " + id);
         UserDto userDto = new UserDto(userService.getUserById(UUID.fromString(id)));
-
-        // response 200
         return ResponseEntity.ok().body(userDto);
     }
 
     @PutMapping("/user/update")
     public ResponseEntity<String> updateUser(@RequestBody UserRequest userRequest) {
         log.info("Updating user - UserRequest: " + userRequest);
+
+        if (userRequest.getUsername().equals("")) {
+            throw new IllegalArgumentException("Username or password cannot be empty");
+        }
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/v1/user/update").toUriString());
         userService.updateUser(userRequest);
-        // response 201
         return ResponseEntity.created(uri).body("User updated successfully");
     }
 
@@ -91,8 +96,12 @@ public class UserController {
     }
 
     @PostMapping("/user/create")
-    public ResponseEntity<String> createUser(@RequestBody UserRequest userRequest ) {
-        log.info("Creating user: {}" , userRequest);
+    public ResponseEntity<String> createUser(@RequestBody UserRequest userRequest) {
+        log.info("Creating user: {}", userRequest);
+
+        if (userRequest.getUsername().equals("") || userRequest.getPassword().equals("")) {
+            throw new IllegalArgumentException("Username or password cannot be empty");
+        }
         userService.saveUser(userRequest);
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/v1/user/create").toUriString());
@@ -100,35 +109,21 @@ public class UserController {
         return ResponseEntity.created(uri).body("User successfully created");
     }
 
-
     @PostMapping("/role/save")
     public ResponseEntity<Role> saveRole(@RequestBody Role role) {
-        // response 201
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/v1/role/save").toUriString());
         return ResponseEntity.created(uri).body(userService.saveRole(role));
     }
 
     @PostMapping("/role/addtouser")
-    public ResponseEntity<?> addRoleToUser(@RequestBody RoleToUserForm form) {
+    public ResponseEntity<?> addRoleToUser(@RequestBody RoleToUserRequest roleToUserRequest) {
         // response 200
-        userService.setUserRole(form.getUsername(), form.getRoleName());
+        userService.setUserRole(roleToUserRequest.getUsername(), roleToUserRequest.getRoleName());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/token/refresh")
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType(APPLICATION_JSON_VALUE);
-        new ObjectMapper().writeValue(response.getOutputStream(), tokenComponent.refreshAccessToken(request, response));
-    }
-
 
 }
 
 
-// for method addRoleToUser
-@Data
-class RoleToUserForm {
-    private String username;
-    private String roleName;
-}

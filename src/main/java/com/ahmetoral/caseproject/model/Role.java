@@ -18,7 +18,6 @@ import java.util.UUID;
 @Table(name = "\"role\"")
 public class Role {
     @Id
-    @Column(name = "id")
     @Type(type = "uuid-char")
     private UUID id = UUID.randomUUID();
     private String name;

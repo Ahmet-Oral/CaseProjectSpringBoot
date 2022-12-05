@@ -2,7 +2,6 @@ package com.ahmetoral.caseproject.security;
 
 
 import com.ahmetoral.caseproject.filter.CustomAuthorizationFilter;
-import com.ahmetoral.caseproject.service.UserService;
 import com.ahmetoral.caseproject.token.TokenComponent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -25,11 +24,9 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    // injected by RequiredArgsConstructor
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final TokenComponent tokenComponent;
-    private final UserService userService;
 
 
     @Override
@@ -42,21 +39,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-
+        // replaced by AuthorizationService - can be implemented if wanted
 //        CustomAuthenticationFilter customAuthenticationFilter =
 //                new CustomAuthenticationFilter(authenticationManagerBean(), tokenComponent, userService);
 //        customAuthenticationFilter.setFilterProcessesUrl("/api/v1/login/**");
+
         http.csrf().disable();
         http.cors();
-
         http.sessionManagement().sessionCreationPolicy(STATELESS);
-        http.authorizeRequests().antMatchers("/api/v1/login/**", "/token/refresh/**", "api/v1/register/**").permitAll();
-//        http.authorizeRequests().antMatchers(GET, "/api/v1/user/**").hasAuthority("ROLE_USER");
-//        http.authorizeRequests().antMatchers(GET, "/api/v1/users/**").hasAuthority("ROLE_ADMIN");
-//        http.authorizeRequests().antMatchers(GET, "/api/v1/users/**").hasAuthority("ROLE_USER");
-//        http.authorizeRequests().antMatchers(POST, "/api/v1/users/save/**").hasAuthority("ROLE_ADMIN");
-//        http.authorizeRequests().anyRequest().authenticated();
-//        http.addFilter(customAuthenticationFilter);
+        http.authorizeRequests().antMatchers("/api/v1/login/**", "/token/refresh/**", "/api/v1/register/**").permitAll();
+        http.authorizeRequests().antMatchers("/api/v1/users/**","/api/v1/user/**" ).hasAuthority("ROLE_ADMIN");
+        http.authorizeRequests().antMatchers("/api/v1/weather/new/**" ).hasAuthority("ROLE_ADMIN");
+        http.authorizeRequests().anyRequest().authenticated();
+//        http.addFilter(customAuthenticationFilter); // replaced by AuthorizationService - can be implemented if wanted
         http.addFilterBefore(new CustomAuthorizationFilter(tokenComponent), UsernamePasswordAuthenticationFilter.class);
     }
 

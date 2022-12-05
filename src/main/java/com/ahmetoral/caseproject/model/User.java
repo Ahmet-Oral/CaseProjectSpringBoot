@@ -27,9 +27,10 @@ public class User {
     @Type(type = "uuid-char")
     private UUID id = UUID.randomUUID();
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(nullable = false)
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER) // When fetching user, load roles at the same time

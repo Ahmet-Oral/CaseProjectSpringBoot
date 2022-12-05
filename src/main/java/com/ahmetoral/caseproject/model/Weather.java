@@ -28,4 +28,6 @@ public class Weather {
     private Date date;
     @Column(nullable = false, name = "condition_")
     private String condition;
+
+
 }

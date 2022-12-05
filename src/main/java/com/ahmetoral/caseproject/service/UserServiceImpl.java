@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor // leaving dependency injection to Lombok,
+@RequiredArgsConstructor
 //@Transactional
-@Slf4j // logging
+@Slf4j
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
@@ -35,19 +35,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         log.info("Loading UserDetails for username: {} from database", username);
         User user = userRepo.findByUsername(username).orElseThrow(()
                 -> new UsernameNotFoundException("User with username: " + username + " not found in the database"));
-
         log.info("user: {}", user);
-
         if (user.getLocked()) {
             log.error("Account with username: " + username + " is locked");
             return null;
         }
-
         Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
         user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
         // User(String username, String password, Collection<? extends GrantedAuthority > authorities)
-
     }
 
     @Override
@@ -57,20 +53,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public User getUserByUsername(String username){
+    public User getUserByUsername(String username) {
         log.info("Fetching user with username: {} from database", username);
-        User user = userRepo.findByUsername(username)
+        return userRepo.findByUsername(username)
                 .orElseThrow(() -> new ApiRequestException("User with username:" + username + " does not exist"));
-        return user;
     }
 
     @Override
     public User getUserById(UUID id) {
         log.info("Fetching user with id: {} from database", id);
-        User user = userRepo.findById(id)
+        return userRepo.findById(id)
                 .orElseThrow(() -> new ApiRequestException("User with id:" + id + " does not exist"));
-
-        return user;
     }
 
     @Override
@@ -78,7 +71,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         log.info("Saving new user with username: {} to the database", userRequest.getUsername());
         if (userRequest.getUsername() == null || userRequest.getPassword() == null) {
             throw new ApiRequestException("Username or password can't be null");
-        }        if (checkUsernameExists(userRequest.getUsername())){
+        }
+        if (checkUsernameExists(userRequest.getUsername())) {
             throw new ApiRequestException("User with username: " + userRequest.getUsername() + " already exist");
         }
         User user = new User();
@@ -86,10 +80,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         userRepo.save(user);
         log.info("role ke: {}", userRequest.getRole());
-        if (userRequest.getRole().equals("")){
-            setUserRole(userRequest.getUsername(),"ROLE_USER");
+        if (userRequest.getRole().equals("")) {
+            setUserRole(userRequest.getUsername(), "ROLE_USER");
         } else {
-            setUserRole(userRequest.getUsername(),userRequest.getRole());
+            setUserRole(userRequest.getUsername(), userRequest.getRole());
         }
     }
 
@@ -101,7 +95,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setUsername(userRequest.getUsername());
         user.setLocked((userRequest.getLocked()));
         userRepo.save(user);
-
     }
 
     @Override
@@ -116,7 +109,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (role.getName().equals("")) {
             throw new ApiRequestException("Role cannot be empty");
         }
-        if (checkRoleExists(role.getName())){
+        if (checkRoleExists(role.getName())) {
             throw new ApiRequestException("Role:" + role.getName() + " already exist");
         }
         return roleRepo.save(role);
@@ -135,14 +128,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (!checkRoleExists(roleName)) {
             saveRole(new Role(UUID.randomUUID(), roleName));
         }
-        Role role = roleRepo.findByName(roleName).get();
+        Role role = roleRepo.findByName(roleName).get(); // already verified the optional
         if (user.getRoles() != null) {
             user.getRoles().clear();// remove the old role
         }
         user.getRoles().add(role);
-
         userRepo.save(user);
-
     }
 
     @Override

@@ -24,11 +24,9 @@ public class WeatherController {
 
     private final WeatherService weatherService;
 
-
-
     @GetMapping("/page/{sortBy}/{isDesc}/{pageNumber}/{pageSize}")
-    public ResponseEntity<Page<Weather>> getPagedData(@PathVariable("sortBy") String sortBy,@PathVariable("isDesc") Boolean isDesc, @PathVariable("pageNumber") Integer pageNumber, @PathVariable("pageSize") Integer pageSize) {
-
+    public ResponseEntity<Page<Weather>> getPagedData(@PathVariable("sortBy") String sortBy, @PathVariable("isDesc") Boolean isDesc, @PathVariable("pageNumber") Integer pageNumber, @PathVariable("pageSize") Integer pageSize) {
+        log.info("Paging data without with sorting. - sortBy=" + sortBy + ", isDesc=" + isDesc + ", pageNumber=" + pageNumber + ", pageSize=" + pageSize);
         Pageable pageable = isDesc
                 ? PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).descending())
                 : PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).ascending());
@@ -37,13 +35,13 @@ public class WeatherController {
     }
 
     @GetMapping("/page/{sortBy}/{isDesc}/{pageNumber}/{pageSize}/{filterBy}/{filter}")
-    public ResponseEntity<Page<Weather>> getPagedAndFilteredData(
-            @PathVariable("sortBy") String sortBy,
-            @PathVariable("isDesc") Boolean isDesc,
-            @PathVariable("pageNumber") Integer pageNumber,
-            @PathVariable("pageSize") Integer pageSize,
-            @PathVariable("filterBy") String filterBy,
-            @PathVariable("filter") String filter) {
+    public ResponseEntity<Page<Weather>> getPagedAndFilteredData(@PathVariable("sortBy") String sortBy, @PathVariable("isDesc") Boolean isDesc,
+                                                                 @PathVariable("pageNumber") Integer pageNumber, @PathVariable("pageSize") Integer pageSize,
+                                                                 @PathVariable("filterBy") String filterBy, @PathVariable("filter") String filter) {
+
+        log.info("Paging data without with sorting and filtering. - " +
+                "sortBy=" + sortBy + ", isDesc=" + isDesc + ", pageNumber=" + pageNumber + ", pageSize="
+                + pageSize + ", filterBy=" + filterBy + ", filter=" + filter);
 
         Pageable pageable = isDesc
                 ? PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).descending())
@@ -52,19 +50,15 @@ public class WeatherController {
         return ResponseEntity.ok().body(page);
     }
 
-   @PostMapping("/new")
-   public ResponseEntity<String> createNew(@RequestBody Weather weather){
+    @PostMapping("/new")
+    public ResponseEntity<String> createNew(@RequestBody Weather weather) {
         log.info("Creating new weather data: " + weather);
         weatherService.createNewWeather(weather);
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath()
-               .path("/api/v1/weather/new").toUriString());
+                .path("/api/v1/weather/new").toUriString());
         return ResponseEntity.created(uri).body("Weather data has been successfully created");
 
-   }
-
-
-
-
+    }
 
 
 }
