@@ -2,7 +2,6 @@ package com.ahmetoral.caseproject.service;
 
 import com.ahmetoral.caseproject.model.Role;
 import com.ahmetoral.caseproject.model.User;
-import com.ahmetoral.caseproject.repo.FailedLoginAttemptRepo;
 import com.ahmetoral.caseproject.repo.RoleRepo;
 import com.ahmetoral.caseproject.repo.UserRepo;
 import com.ahmetoral.caseproject.requests.UserRequest;
@@ -13,16 +12,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,14 +27,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class) // initialize mocks and clear resources after each test
 class UserServiceImplTest {
 
-    @MockBean
-    private RoleRepo roleRepo;
-
-    @MockBean
-    private UserRepo userRepo;
-
-    @Autowired
-    private UserServiceImpl userServiceImpl;
 
     @Mock
     private UserRepo userRepoMock;
@@ -46,8 +34,6 @@ class UserServiceImplTest {
     private RoleRepo roleRepoMock;
     @Mock
     private PasswordEncoder passwordEncoder;
-    @Mock
-    private FailedLoginAttemptRepo failedLoginAttemptRepo;
 
     private UserServiceImpl underTest;
 
@@ -98,7 +84,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    @Disabled
     void canAddRoleToUser() {
         // given
         User user = new User();
@@ -112,7 +97,7 @@ class UserServiceImplTest {
         underTest.setUserRole("username", "ROLE_TEST");
         // then
         verify(userRepoMock).findByUsername("username");
-        verify(roleRepoMock).findByName("ROLE_TEST");
+        assertNotNull(userRepoMock.findByUsername("username").get().getRoles());
     }
 
     @Test

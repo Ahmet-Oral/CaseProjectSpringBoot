@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    List<User> getUsers(); // todo pagination maybe?
+    List<User> getUsers();
     User getUserByUsername(String username);
     void updateUser(UserRequest user);
     void saveUser(UserRequest userRequest);
