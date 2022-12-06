@@ -30,6 +30,7 @@ public class WeatherController {
         Pageable pageable = isDesc
                 ? PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).descending())
                 : PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).ascending());
+
         Page<Weather> page = weatherService.getDataWithPagination(pageable);
         return ResponseEntity.ok().body(page);
     }
