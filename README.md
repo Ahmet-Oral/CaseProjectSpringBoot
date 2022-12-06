@@ -46,7 +46,7 @@ By default there are 2 accounts:
 * Customizable pagination
 * Filtering
 * Sorting
-* New data insertion (only for the users with role: admin)
+* Data insertion (role: admin)
 
 
 ## Weather table
