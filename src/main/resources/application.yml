@@ -4,6 +4,8 @@ spring:
 
 server:
   port: 8080
+#  servlet:
+#    context-path: /api/v1
 
 ---
 spring:
@@ -13,16 +15,18 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     password: password
-    url: jdbc:mysql://localhost:3306/inventory_management
+    url: jdbc:mysql://localhost:3306/spring_task
     username: root
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 #      naming:
 #        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
     properties:
       hibernate:
+        check_nullability: true
+        #        globally_quoted_identifiers: true
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
 ---
@@ -32,10 +36,11 @@ spring:
       on-profile: release
   datasource:
     password: password
-    url: url
-    username: username
+    url: sqlServerConnString
+    username: sa
   jpa:
     hibernate:
+#      globally_quoted_identifiers: true
       ddl-auto: update
       format_sql: true
     show-sql: true
